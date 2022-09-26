@@ -15,26 +15,31 @@
 <script setup lang="ts">
 import { ref, reactive } from "vue";
 import type { Action } from "@/types/Action";
-import type { Status } from "@/types/Status";
+import type { Status, StatusNumber, StatusParam } from "@/types/Status";
 
 import {
   isNumberEffect,
   isGenericEffect,
   type RestEffect,
+  type Effect,
+  type NumberEffect,
+  type GenericEffect,
 } from "@/types/Effect";
 
-import { BASE_LEVEL } from "./../../game";
+import { DESERT_FIGHT_QUEST } from "@/quests";
 
 import PanelDescription from "./PanelDescription.vue";
 import PanelActions from "./PanelActions.vue";
 import PanelPicture from "./PanelPicture.vue";
 import PanelStatus from "./PanelStatus.vue";
+import type { State } from "@/types/State";
+import type { ComplexCondition, Condition } from "@/types/Condition";
 
-const currentState = ref(BASE_LEVEL.start);
-const status: Status = reactive(BASE_LEVEL.status);
+const currentState = ref(DESERT_FIGHT_QUEST.start);
+const status: Status = reactive(DESERT_FIGHT_QUEST.status);
 
 function doAction(action: Action): void {
-  currentState.value = action.next;
+  currentState.value = getNextState(action, status);
 
   for (const effect of action.effects) {
     const param = status[effect.param];
@@ -44,45 +49,141 @@ function doAction(action: Action): void {
       return;
     }
 
-    if (isNumberEffect(effect)) {
-      if (typeof param.value === "string") {
-        console.error(
-          `Parameter ${effect.param} should be a number but it has type string`
-        );
-        return;
-      }
+    status[effect.param] = getEffectedParam(effect, param);
+  }
+}
 
-      switch (effect.type) {
-        case "inc":
-          param.value += effect.value;
-          break;
-        case "dec":
-          param.value -= effect.value;
-          break;
-        default:
-          return effect.type;
-      }
-    } else if (isGenericEffect(effect)) {
-      switch (effect.type) {
-        case "set":
-          param.value = effect.value;
-          break;
-        default:
-          return effect.type;
-      }
-    } else {
-      const restEffect = effect as RestEffect;
-      switch (restEffect.type) {
-        case "hide":
-          param.isHidden = true;
-          break;
-        case "show":
-          param.isHidden = false;
-          break;
-        default:
-          return restEffect.type;
+function getNextState(action: Action, status: Status): State {
+  const { next } = action;
+
+  if (Array.isArray(next)) {
+    const filteredState = next.filter((state) =>
+      checkComplexCondition(state.condition || [], status)
+    );
+
+    if (filteredState.length === 0) {
+      throw Error("No state to go");
+    }
+
+    const r = Math.random();
+    let p = 0;
+
+    for (const state of filteredState.slice(0, -1)) {
+      if (!state.probability) return state.state;
+
+      p += state.probability;
+
+      if (r <= p) {
+        return state.state;
       }
     }
+
+    return filteredState[filteredState.length - 1].state;
+  } else {
+    return next;
+  }
+}
+
+function getEffectedParam(effect: Effect, param: StatusParam): StatusParam {
+  if (isNumberEffect(effect)) {
+    if (typeof param.value === "string") {
+      console.error(
+        `Parameter ${effect.param} should be a number but it has type string`
+      );
+      return param;
+    }
+
+    return getEffectedNumber(effect, {
+      ...param,
+      value: param.value,
+    });
+  } else if (isGenericEffect(effect)) {
+    return getEffectedGeneric(effect, param);
+  } else {
+    return getEffectedRest(effect as RestEffect, param);
+  }
+}
+
+function getEffectedNumber(effect: NumberEffect, param: StatusNumber) {
+  switch (effect.type) {
+    case "inc":
+      return {
+        ...param,
+        value: param.value + effect.value,
+      };
+    case "dec":
+      return {
+        ...param,
+        value: param.value - effect.value,
+      };
+    default:
+      return effect.type;
+  }
+}
+
+function getEffectedGeneric(effect: GenericEffect, param: StatusParam) {
+  switch (effect.type) {
+    case "set":
+      return {
+        ...param,
+        value: effect.value,
+      };
+    default:
+      return effect.type;
+  }
+}
+
+function getEffectedRest(effect: RestEffect, param: StatusParam) {
+  switch (effect.type) {
+    case "hide":
+      return {
+        ...param,
+        isHidden: true,
+      };
+    case "show":
+      return {
+        ...param,
+        isHidden: false,
+      };
+    default:
+      return effect.type;
+  }
+}
+
+function checkComplexCondition(
+  orConditions: ComplexCondition,
+  status: Status
+): boolean {
+  if (orConditions.length === 0) {
+    return true;
+  }
+
+  return orConditions.some((andConditions) =>
+    andConditions.every((cond) => checkCondition(cond, status))
+  );
+}
+
+function checkCondition(condition: Condition, status: Status): boolean {
+  let param1;
+  let param2;
+
+  if ("const" in condition) {
+    param1 = status[condition.param];
+    param2 = condition.const;
+  } else {
+    param1 = status[condition.param1];
+    param2 = status[condition.param2];
+  }
+
+  switch (condition.type) {
+    case "eq":
+      return param1 === param2;
+    case "greater":
+      return param1 > param2;
+    case "lower":
+      return param1 < param2;
+    default:
+      return condition.type;
   }
 }
 </script>

@@ -4,6 +4,10 @@ export interface StatusParam {
   isHidden: boolean;
 }
 
+export interface StatusNumber extends StatusParam {
+  value: number;
+}
+
 export interface Status {
   [key: string]: StatusParam;
 }

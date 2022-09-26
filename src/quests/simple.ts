@@ -1,6 +1,6 @@
-import type { GenericEffect, NumberEffect } from "./types/Effect";
-import type { Level } from "./types/Level";
-import type { State } from "./types/State";
+import type { GenericEffect, NumberEffect } from "@/types/Effect";
+import type { Level } from "@/types/Level";
+import type { State } from "@/types/State";
 
 /** состояния */
 const INIT_STATE: State = {
@@ -92,7 +92,9 @@ const STATUS = {
   },
 };
 
-export const BASE_LEVEL: Level = {
+const QUEST: Level = {
   start: INIT_STATE,
   status: STATUS,
 };
+
+export default QUEST;

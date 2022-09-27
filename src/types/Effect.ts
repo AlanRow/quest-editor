@@ -8,6 +8,7 @@ export type EffectType = NumberEffectType | GenericEffectType | "show" | "hide";
 export interface Effect {
   type: EffectType;
   param: string;
+  value?: any;
 }
 
 export interface ValueEffect extends Effect {

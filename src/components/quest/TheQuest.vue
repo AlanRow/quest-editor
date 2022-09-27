@@ -3,6 +3,7 @@
     <PanelDescription :description="currentState.desc" class="quest__desc" />
     <PanelActions
       :actionsList="currentState.actions"
+      :status="status"
       class="quest__actions"
       @select="doAction"
     />
@@ -26,17 +27,17 @@ import {
   type GenericEffect,
 } from "@/types/Effect";
 
-import { DESERT_FIGHT_QUEST } from "@/quests";
+import { THREE_FIGHT } from "@/quests";
 
 import PanelDescription from "./PanelDescription.vue";
 import PanelActions from "./PanelActions.vue";
 import PanelPicture from "./PanelPicture.vue";
 import PanelStatus from "./PanelStatus.vue";
 import type { State } from "@/types/State";
-import type { ComplexCondition, Condition } from "@/types/Condition";
+import { checkComplexCondition } from "@/types/Condition";
 
-const currentState = ref(DESERT_FIGHT_QUEST.start);
-const status: Status = reactive(DESERT_FIGHT_QUEST.status);
+const currentState = ref(THREE_FIGHT.start);
+const status: Status = reactive(THREE_FIGHT.status);
 
 function doAction(action: Action): void {
   currentState.value = getNextState(action, status);
@@ -147,43 +148,6 @@ function getEffectedRest(effect: RestEffect, param: StatusParam) {
       };
     default:
       return effect.type;
-  }
-}
-
-function checkComplexCondition(
-  orConditions: ComplexCondition,
-  status: Status
-): boolean {
-  if (orConditions.length === 0) {
-    return true;
-  }
-
-  return orConditions.some((andConditions) =>
-    andConditions.every((cond) => checkCondition(cond, status))
-  );
-}
-
-function checkCondition(condition: Condition, status: Status): boolean {
-  let param1;
-  let param2;
-
-  if ("const" in condition) {
-    param1 = status[condition.param];
-    param2 = condition.const;
-  } else {
-    param1 = status[condition.param1];
-    param2 = status[condition.param2];
-  }
-
-  switch (condition.type) {
-    case "eq":
-      return param1 === param2;
-    case "greater":
-      return param1 > param2;
-    case "lower":
-      return param1 < param2;
-    default:
-      return condition.type;
   }
 }
 </script>

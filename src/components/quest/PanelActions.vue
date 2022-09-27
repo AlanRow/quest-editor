@@ -2,7 +2,7 @@
   <ThePanel>
     <ul class="actions-list">
       <li
-        v-for="action in props.actionsList"
+        v-for="action in availableActions"
         :key="action.id"
         class="actions-list__item action"
         @click="emit('select', action)"
@@ -20,17 +20,29 @@ export default {
 </script>
 
 <script setup lang="ts">
+import { computed } from "vue";
 import type { Action } from "@/types/Action";
 
 import ThePanel from "./ThePanel.vue";
+import type { Status } from "@/types/Status";
+import { checkComplexCondition } from "@/types/Condition";
 
 const props = defineProps<{
   actionsList: Action[];
+  status: Status;
 }>();
 
 const emit = defineEmits<{
   (event: "select", action: Action): void;
 }>();
+
+const availableActions = computed(() =>
+  props.actionsList.filter(
+    (action) =>
+      !action.conditions ||
+      checkComplexCondition(action.conditions, props.status)
+  )
+);
 </script>
 
 <style scoped lang="scss">

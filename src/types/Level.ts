@@ -1,5 +1,5 @@
-import type { State } from "./State";
-import type { Status } from "./Status";
+import type { State } from "./states";
+import type { Status } from "./statuses";
 
 export interface Level {
   start: State;

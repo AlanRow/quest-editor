@@ -1,9 +1,9 @@
 import type { Action } from "@/types/Action";
-import type { ConstCondition } from "@/types/Condition";
-import type { GenericEffect, NumberEffect } from "@/types/Effect";
+import type { Condition } from "@/types/conditions";
+import type { GenericEffect, NumberEffect } from "@/types/effects";
 import type { Level } from "@/types/Level";
-import type { OptionalState, State } from "@/types/State";
-import type { Status } from "@/types/Status";
+import type { OptionalState, State } from "@/types/states";
+import type { Status } from "@/types/statuses";
 
 /** состояния */
 const CHOOSE_WEAPON: State = {
@@ -63,7 +63,7 @@ function setUserWeaponEffect(value: WeaponType): GenericEffect {
 }
 
 /** условия */
-function checkWeapon(target: WeaponType): ConstCondition {
+function checkWeapon(target: WeaponType): Condition {
   return {
     type: "eq",
     const: target,

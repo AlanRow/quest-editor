@@ -1,6 +1,6 @@
-import type { OptionalState, State } from "./State";
-import type { Effect } from "./Effect";
-import type { ComplexCondition } from "./Condition";
+import type { OptionalState, State } from "./states";
+import type { Effect } from "./effects";
+import type { ComplexCondition } from "./conditions";
 
 export interface Action {
   id: string;

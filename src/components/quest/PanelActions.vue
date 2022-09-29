@@ -24,8 +24,8 @@ import { computed } from "vue";
 import type { Action } from "@/types/Action";
 
 import ThePanel from "./ThePanel.vue";
-import type { Status } from "@/types/Status";
-import { checkComplexCondition } from "@/types/Condition";
+import type { Status } from "@/types/statuses";
+import { checkComplexCondition } from "@/utils/conditions";
 
 const props = defineProps<{
   actionsList: Action[];

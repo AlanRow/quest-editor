@@ -9,32 +9,31 @@
     />
     <PanelPicture :imageUrl="currentState.picture" class="quest__picture" />
     <PanelStatus :status="status" />
-    <!--<section class="quest__status panel"></section> -->
   </main>
 </template>
 
 <script setup lang="ts">
 import { ref, reactive } from "vue";
+
 import type { Action } from "@/types/Action";
-import type { Status, StatusNumber, StatusParam } from "@/types/Status";
+import type { Status, StatusNumber, StatusParam } from "@/types/statuses";
+import type {
+  Effect,
+  NumberEffect,
+  GenericEffect,
+  NoValueEffect,
+} from "@/types/effects";
+import type { State } from "@/types/states";
 
-import {
-  isNumberEffect,
-  isGenericEffect,
-  type RestEffect,
-  type Effect,
-  type NumberEffect,
-  type GenericEffect,
-} from "@/types/Effect";
-
-import { THREE_FIGHT } from "@/quests";
+import { checkComplexCondition } from "@/utils/conditions";
+import { isNumberEffect } from "@/utils/effects";
 
 import PanelDescription from "./PanelDescription.vue";
 import PanelActions from "./PanelActions.vue";
 import PanelPicture from "./PanelPicture.vue";
 import PanelStatus from "./PanelStatus.vue";
-import type { State } from "@/types/State";
-import { checkComplexCondition } from "@/types/Condition";
+
+import { THREE_FIGHT } from "@/quests";
 
 const currentState = ref(THREE_FIGHT.start);
 const status: Status = reactive(THREE_FIGHT.status);
@@ -86,22 +85,24 @@ function getNextState(action: Action, status: Status): State {
 }
 
 function getEffectedParam(effect: Effect, param: StatusParam): StatusParam {
-  if (isNumberEffect(effect)) {
-    if (typeof param.value === "string") {
-      console.error(
-        `Parameter ${effect.param} should be a number but it has type string`
-      );
-      return param;
-    }
+  if ("value" in effect) {
+    if (isNumberEffect(effect)) {
+      if (typeof param.value === "string") {
+        console.error(
+          `Parameter ${effect.param} should be a number but it has type string`
+        );
+        return param;
+      }
 
-    return getEffectedNumber(effect, {
-      ...param,
-      value: param.value,
-    });
-  } else if (isGenericEffect(effect)) {
-    return getEffectedGeneric(effect, param);
+      return getEffectedNumber(effect, {
+        ...param,
+        value: param.value,
+      });
+    } else {
+      return getEffectedGeneric(effect, param);
+    }
   } else {
-    return getEffectedRest(effect as RestEffect, param);
+    return getEffectedNoValue(effect, param);
   }
 }
 
@@ -134,7 +135,7 @@ function getEffectedGeneric(effect: GenericEffect, param: StatusParam) {
   }
 }
 
-function getEffectedRest(effect: RestEffect, param: StatusParam) {
+function getEffectedNoValue(effect: NoValueEffect, param: StatusParam) {
   switch (effect.type) {
     case "hide":
       return {
